@@ -1,0 +1,47 @@
+﻿version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: backend_test_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: supersecretpassword
+      POSTGRES_DB: backend_test
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Монтуємо наш init.sql для автоматичного створення таблиць при старті
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d backend_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend_test_app
+    ports:
+      - "3000:3000"
+    command: npx ts-node src/main.ts
+    environment:
+      NODE_ENV: development
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: supersecretpassword
+      DB_NAME: backend_test
+    depends_on:
+      postgres:
+        condition: service_healthy # Застосунок стартує ТІЛЬКИ після того, як база повністю готова приймати з'єднання
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/dist
+
+volumes:
+  pgdata:
