@@ -25,10 +25,15 @@ export class PspController {
 
     // Передаємо на безпечне збереження в CoreEvents
     const result = await this.coreEventsService.handleWebhookEvent({
-      brandId,
+      brand_id: brandId,
       provider: 'stripe',
-      eventId,
-      eventType,
+      event_id: eventId,
+      event_type: eventType,
+      user_id: payload?.data?.object?.customer, // Якщо є можливість, передаємо user_id для аналітики
+      amount: payload?.data?.object?.amount, // Якщо є можливість, передаємо суму для аналітики
+      currency: payload?.data?.object?.currency, // Якщо є можливість, передаємо валюту для аналітики
+      idempotency_key: payload?.id, // Використовуємо eventId як idempotencyKey для Stripe
+      status: 'success',
       payload,
     });
 

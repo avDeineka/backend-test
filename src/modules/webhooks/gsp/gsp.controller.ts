@@ -26,10 +26,15 @@ export class GspController {
 
         // Передаємо у наш універсальний сервіс, але вказуємо provider: 'gsp_game'
         const result = await this.coreEventsService.handleWebhookEvent({
-            brandId,
+            brand_id: brandId,
             provider: 'gsp_game',
-            eventId,
-            eventType,
+            event_id: eventId,
+            event_type: eventType,
+            user_id: payload?.user_id, // Якщо є можливість, передаємо user_id для аналітики
+            amount: payload?.amount, // Якщо є можливість, передаємо суму для аналітики
+            currency: payload?.currency, // Якщо є можливість, передаємо валюту для аналітики
+            idempotency_key: payload?.transaction_id, // Якщо є можливість, передаємо idempotency_key для аналітики
+            status: 'success',
             payload,
         });
 

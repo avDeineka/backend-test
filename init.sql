@@ -65,6 +65,12 @@ CREATE TABLE raw_events (
     brand_id VARCHAR(50) NOT NULL,
     provider VARCHAR(50) NOT NULL,      -- 'stripe', 'game provider x'
     event_type VARCHAR(100) NOT NULL,    -- 'charge.succeeded', 'round.completed'
+
+    user_id VARCHAR(100) NULL,
+    amount DECIMAL(15, 4) NULL, -- Використовуємо DECIMAL для точних фінансових обчислень
+    currency VARCHAR(10) NULL,
+    idempotency_key VARCHAR(255) NULL,
+
     external_event_id VARCHAR(255),     -- ID події з боку провайдера (корисно для лінкування з idempotency)
     payload JSONB NOT NULL,             -- Сирий JSON вебхука без жодних змін
     status VARCHAR(20) NOT NULL DEFAULT 'pending', -- 'pending', 'processed', 'failed'
@@ -74,5 +80,8 @@ CREATE TABLE raw_events (
 );
 
 -- Індекси для аналітики та майбутнього процесингу (Ledger Integration)
-CREATE INDEX idx_raw_events_brand_status ON raw_events(brand_id, status);
-CREATE INDEX idx_raw_events_external_id ON raw_events(brand_id, external_event_id);
+CREATE INDEX IF NOT EXISTS idx_raw_events_brand_status ON raw_events(brand_id, status);
+CREATE INDEX IF NOT EXISTS idx_raw_events_external_id ON raw_events(brand_id, external_event_id);
+-- Індекси для швидких фінансових звітів та пошуку
+CREATE INDEX IF NOT EXISTS idx_raw_events_finance ON raw_events(brand_id, user_id, currency);
+CREATE INDEX IF NOT EXISTS idx_raw_events_created ON raw_events(created_at);
